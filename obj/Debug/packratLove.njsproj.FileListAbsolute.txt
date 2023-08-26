@@ -1,0 +1,3 @@
+C:\Repository\packratLove\obj\Debug\packratLove.njsproj.AssemblyReference.cache
+C:\Repository\packratLove\obj\Debug\packratLove.njsproj.CoreCompileInputs.cache
+C:\Repository\packratLove\bin\Microsoft.NodejsTools.WebRole.dll

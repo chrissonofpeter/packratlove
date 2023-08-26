@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat new</title>
+    <style>
+      body { margin: 0;padding-bottom: 3rem;font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      #menu { left:1px;top:0px;position:absolute;height: 30px;overflow: auto;flex-grow: 1; }
+      #chat { background: rgba(0, 0, 0, 0.15); left:1px; top:30px; position:relative; height: 500px; overflow: auto;
+              flex-grow: 1; z-index: 1;}
+      #form { border: 1px solid black;background: rgba(0, 0, 0, 0.15);padding: 0.25rem;position:relative;bottom: 0;top: 30px;
+              left: 0; right: 0;box-sizing: border-box;height: 3rem;display: flex; backdrop-filter: blur(10px); }
+      #input { border: 1px solid black; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
+      #input:focus { outline: none; }
+      #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages > li { padding: 0.5rem 1rem; }
+      #messages > li:nth-child(odd) { background: #efefef; }
+
+      #layoutgrid { border: 1px solid red; left:1px; top:30px; width: 99%; height:99%; position:absolute; overflow: auto; z-index: 0; }
+    </style>
+  
+  <script src="http://www.frankenzilla.com/ajax/libs/socket.io/socket.io.min.js"></script>
+  <script src="http://www.frankenzilla.com/ajax/libs/jquery.min.js"></script>
+  <!--
+    https://social.msdn.microsoft.com/Forums/lync/en-US/b23bd4c3-a2e8-43e5-b476-3910e9d1e984/issue-in-accessing-cross-domain?forum=sharepointdevelopment
+  -->
+  </head>  
+  
+  <body ondragover="drag_over(event)" ondrop="drop(event)" >
+    <div id="menu">
+      DDD: <button onclick="createNote(200,185,'#9200A2','business process')" style="background-color: #9200A2; width: 20px; height: 20px; border: apx"> </button>
+      &nbsp;&nbsp;
+      <button onclick="createNote(200,185,'#FFFF00','aggregate')" style="background-color: #FFFF00; width: 20px; height: 20px; border: apx"> </button>
+      &nbsp;&nbsp;
+      <button onclick="createNote(200,185,'#0070C0','command')" style="background-color: #0070C0; width: 20px; height: 20px; border: apx"> </button>
+      &nbsp;&nbsp;
+      <button onclick="createNote(200,185,'#FFC000','domain event')" style="background-color: #FFC000; width: 20px; height: 20px; border: apx"> </button>
+      &nbsp;&nbsp;
+      <button onclick="createNote(200,185,'#BFBFBF','hold')" style="background-color: #BFBFBF; width: 20px; height: 20px; border: apx"> </button>
+      &nbsp;&nbsp;
+      <button onclick="createNote(200,185,'#002164','entity-value object')" style="background-color: #002164; width: 20px; height: 20px; border: apx"> </button>
+      &nbsp;&nbsp;
+      <button onclick="createNote(200,185,'#FF0000','external system')" style="background-color: #FF0000; width: 20px; height: 20px; border: apx"> </button>
+      &nbsp;&nbsp;
+      <button onclick="createNote(200,185,'#FFFFFF','information')" style="background-color: #FFFFFF; width: 20px; height: 20px; border: apx"> </button>
+    </div>
+
+    <div id="layoutgrid">
+      <p></p>
+    </div>
+
+    <script type="text/javascript">
+      var socket = io();
+      var noteArray = [];
+      var project = "";
+    
+      $(document).ready(function() {   //same as: $(function() { 
+        socket.emit('get all notes', project);
+        console.log( "get all notes sent to node" );
+        });
+
+
+      // create code for current date
+      function todaysDate() {
+	      var date = [];
+	      var fullDate = new Date()
+	      var month = greaterThanTen ( fullDate.getMonth()+1 );
+	      date.push( month );
+	      var day = greaterThanTen ( fullDate.getDate() );
+	      date.push( day );
+	      var year = fullDate.getFullYear();
+	      date.push( year );
+    
+        return date.join("")
+        }
+
+      // *******************************************
+      // INSTRUMENTS
+      // *******************************************
+      var greaterThanTen = (num)=>{
+	      num >= 10 ? num : num = "0" + num;
+	      return num;
+        }
+        
+
+      // create code for current time
+      function currentTime() {
+	      var time = [];
+	      var currentDate = new Date();
+	      var hour = greaterThanTen ( currentDate.getHours() );
+	      time.push ( hour );
+	      var minute = greaterThanTen ( currentDate.getMinutes() );
+	      time.push ( minute );
+	      var second = greaterThanTen ( currentDate.getSeconds() );
+	      time.push ( second );
+	
+	      return time.join("");
+        }
+
+
+      socket.on('add note', function(obj) {        
+        console.log( "obj.id="+obj.id );
+        // add the note to the layout grid
+        addNoteToLayout(obj);  
+        });
+
+
+      socket.on('get all notes', function(jsonData) {
+        // jsonData is an array
+        console.log( "all notes received from node" );
+
+        for (i=0; i<jsonData.length; i++) {
+          console.log("jsonData["+i+"].id = " + jsonData[i].id);
+          addNoteToLayout(jsonData[i]); 
+          }
+        });
+      
+
+      // *******************************************
+      // CREATE THE DIV AND ADD TO LAYOUT
+      // *******************************************
+      var addNoteToLayout = (obj)=>{
+        var div = document.createElement('div');
+        div.id = obj.id;
+        div.draggable = "true";
+        div.style.position = 'absolute';
+        div.style.left = obj.locX+"px";
+        div.style.top = obj.locY+"px";
+        div.style.backgroundColor = obj.color;
+        if (obj.color == "#FFFFFF") div.style.border="1px solid #CCCCCC";
+        div.style.borderRadius = "2px";
+        div.style.zIndex = obj.z;
+        div.style.width = obj.width+"px";
+        div.style.height = obj.height+"px";
+        div.style.fontFamily = "Arial";
+        div.style.fontSize = "10px";
+        div.style.color = "#1C5C9E";
+
+        // childNode[0]
+        var divText = document.createElement('div');
+        divText.id = obj.id;
+        divText.contentEditable="true";
+        divText.style.FontFamily="Arial";
+        divText.style.fontSize="15px";
+        divText.style.fontWeight="400";
+        divText.style.border="0px";
+        divText.style.color="#000000";
+        if (obj.color == "#0070C0" || obj.color == "#002164" || obj.color == "#9200A2" || obj.color == "#FF0000") divText.style.color="#FFFFFF";
+        divText.style.margin="2px";
+        divText.style.padding="2px";
+        divText.style.width=(obj.width-9)+"px";
+        divText.style.height=(obj.height-29)+"px";
+        divText.style.overflow="auto";
+        divText.style.zIndex=obj.z+1;
+        divText.innerHTML=obj.content;
+        divText.onblur = function() {
+          updateNoteText( this.parentElement.id, this.parentElement.childNodes[0].innerHTML);
+          console.log(this.parentElement.id + "blurred");
+          };
+
+        div.appendChild(divText);
+
+        // ATTACH DIV TO LAYOUT
+        // https://jquery.com/
+        $('#layoutgrid').append(div);
+
+        //noteArray.push(div);
+
+        div.addEventListener('dragstart', function(event) {
+          console.log("dragging "+event.target.id);
+          var style = window.getComputedStyle(event.target, null);
+          var str = ( parseInt(style.getPropertyValue("left")) - event.clientX ) + "," + ( parseInt(style.getPropertyValue("top") ) - event.clientY) + "," + event.target.id;
+          event.dataTransfer.setData("Text", str);
+          });
+
+
+        // add event listener to note for drop
+        div.addEventListener('drop', function(event) {  
+          var offset = event.dataTransfer.getData("Text").split(',');
+          console.log(offset);
+          var dm = document.getElementById( offset[2] );
+          posX = event.clientX + parseInt( offset[0],10 );
+          posY = event.clientY + parseInt( offset[1],10 );
+          dm.style.left = posX + 'px';
+          dm.style.top= posY + 'px';
+          event.preventDefault();
+
+          //updateStepCoordinates (offset [2], posX, posY);
+          return false;  
+          });  
+
+        }
+      // *******************************************
+      // *******************************************
+
+
+        
+      // ADD NOTE TO THE LAYOUT
+      // https://www.freecodecamp.org/news/javascript-create-object-how-to-define-objects-in-js/
+      var createNote = (w,h,c,t) => {
+        var dt = todaysDate() + currentTime();
+        var obj = { id: dt, width: w, height: h, color: c, type: t, locX: 30, locY: 30, z: 200, content: "", arrConnect: [] };
+        socket.emit('add note', obj);
+        } // end addNote
+ 
+
+      var updateNoteText = ( idVal, textVal) => {
+        var obj = { id:idVal, content:textVal };
+        socket.emit('update note text', obj);
+        };
+
+/*
+var projIndex = document.getElementById('project').selectedIndex;
+var proj= document.getElementById('project').options[projIndex]. text
+*/
+
+
+// **************
+// DRAG FUNCTIONS
+// https://msdn.microsoft.com/en-us/library/ms536928(v=vs.85).aspx
+// super efficient: http://stackoverflow.com/questions/4367055/javascript-ondrag-ondragstart-ondragend
+// **************
+
+
+
+      function drop(event) {
+        
+        var offset = event.dataTransfer.getData("Text").split(',');
+        console.log(offset);
+        var div = document.getElementById( offset[2] );
+        console.log("drop " + div.id);
+        posX = event.clientX + parseInt( offset[0],10 );
+        posY = event.clientY + parseInt( offset[1],10 );
+        div.style.left = posX + 'px';
+        div.style.top= posY + 'px';
+        event.preventDefault();
+
+        var obj = { id: div.id, x: posX, y: posY }
+
+        socket.emit('move note', obj);
+
+        return false;
+        }
+
+      function drag_over(event) {
+        event.preventDefault();
+        return false;
+        }
+    
+    </script>
+
+  </body>
+</html>
