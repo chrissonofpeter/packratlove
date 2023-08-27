@@ -7,17 +7,17 @@ const app = require('express')();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const MongoClient = require('mongodb').MongoClient;
-const mysql = require('mysql');
+// const mysql = require('mysql');
 
-const { JSDOM } = require('jsdom');
-const { window } = new JSDOM("");
-const $ = require('jquery')(window);
-const Enumerable = require('linq');
+//const { JSDOM } = require('jsdom');
+//const { window } = new JSDOM("");
+//const $ = require('jquery')(window);
+//const Enumerable = require('linq');
 
 
 // test linq
-let count = Enumerable.range(1, 10).count(i => i < 5);
-console.log("Enumerable count = " + count); // 4
+//let count = Enumerable.range(1, 10).count(i => i < 5);
+//console.log("Enumerable count = " + count); // 4
 
 
 // Body Parser
@@ -37,15 +37,47 @@ const bodyParser = require('body-parser')();
 const url = "mongodb://localhost:27017/";
 const noteArray = [];
 
-var con = mysql.createConnection({
-	host: "localhost",
-	user: "root",
-	password: "987yt6gyo!!hpj807hoiupJ07yHGOuj97ohGI990UN",
-	port: 8889,
-	database: "notes"
-});
+//var con = mysql.createConnection({
+//	host: "localhost",
+//	user: "root",
+//	password: "987yt6gyo!!hpj807hoiupJ07yHGOuj97ohGI990UN",
+//	port: 8889,
+//	database: "notes"
+//});
+
 // https://stackoverflow.com/questions/14087924/cannot-enqueue-handshake-after-invoking-quit
-con.connect();
+//con.connect();
+
+
+const sql = require('mssql')
+
+const sqlConfig = {
+	user: 'mosaic',
+	password: 'mosaic',
+	database: 'mosaic',
+	server: 'localhost',
+	pool: {
+		max: 10,
+		min: 0,
+		idleTimeoutMillis: 30000
+	},
+	options: {
+		encrypt: true, // for azure
+		trustServerCertificate: false // change to true for local dev / self-signed certs
+	}
+}
+
+async () => {
+	try {
+		// make sure that any items are correctly URL encoded in the connection string
+		await sql.connect(sqlConfig)
+		const result = await sql.query`SELECT * FROM MOSAIC.VIV_RACK`
+		console.dir(result)
+	} catch (err) {
+		// ... error checks
+	}
+}
+
 
 
 // *******************************************
@@ -143,7 +175,7 @@ io.on('connection', (socket) => {
 		console.log('get all notes for folder id' + fid);
 
 		// https://stackoverflow.com/questions/41758870/how-to-convert-result-table-to-json-array-in-mysql/41760134
-		var sql = "SELECT JSON_ARRAYAGG(JSON_OBJECT('noteID', noteID, 'noteTitle', noteTitle, 'noteText', noteText, 'locX', locX, 'locY', locY, 'locZ', locZ)) from note where FolderFK=" + fid;
+		//var sql = "SELECT JSON_ARRAYAGG(JSON_OBJECT('noteID', noteID, 'noteTitle', noteTitle, 'noteText', noteText, 'locX', locX, 'locY', locY, 'locZ', locZ)) from note where FolderFK=" + fid;
 		var out;
 		var out2;
 
@@ -152,7 +184,7 @@ io.on('connection', (socket) => {
 		//	if (err) throw err;
 		// if connection is successful
 
-		con.query(sql, function (err, result, fields) {
+		sql.query(sql, function (err, result, fields) {
 			// if any error while executing above query, throw error
 			if (err) throw err;
 			// if there is no error, you have the result
@@ -184,12 +216,12 @@ io.on('connection', (socket) => {
 
 		var sql = "UPDATE note SET locX=" + obj.x + ", locY=" + obj.y + ", locZ=" + obj.z + " WHERE noteID=" + obj.id;
 
-		con.query(sql, function (err, result, fields) {
-			// if any error while executing above query, throw error
-			if (err) throw err;
+		//con.query(sql, function (err, result, fields) {
+		//	// if any error while executing above query, throw error
+		//	if (err) throw err;
 
-			io.emit('location update result', result);
-		});
+		//	io.emit('location update result', result);
+		//});
 	});
 
 

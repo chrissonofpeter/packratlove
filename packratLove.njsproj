@@ -40,7 +40,10 @@
     <Content Include="http_server2.js" />
     <Content Include="http_server_express.js" />
     <Content Include="index.js" />
+    <Content Include="note.html" />
     <Content Include="notecards.html" />
+    <Content Include="package-lock.json" />
+    <Content Include="package.json" />
     <Content Include="routes\index.js" />
     <Content Include="routes\user.js" />
     <Content Include="tsconfig.json" />
@@ -57,6 +60,9 @@
     <Folder Include="public\stylesheets\" />
     <Folder Include="routes\" />
     <Folder Include="views\" />
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="index.ts" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsToolsV2.targets" />
   <ProjectExtensions>
